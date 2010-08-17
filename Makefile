@@ -1,6 +1,7 @@
 include $(GOROOT)/src/Make.$(GOARCH)
 
 TARG=pcap
+GOFILES=decode.go
 CGOFILES=pcap.go
 CGO_LDFLAGS=-lpcap
 CLEANFILES=pcaptest tcpdump
