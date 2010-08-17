@@ -233,3 +233,29 @@ func(p *Pcap)  Inject(data []byte) (err string) {
 	C.free(unsafe.Pointer(buf))
 	return
 }
+
+type PcapDumper struct {
+    cptr *C.pcap_dumper_t
+}
+
+func NewPcapDumper(p *Pcap, filename string) (pd *PcapDumper) {
+    pd = new(PcapDumper)
+    pd.cptr = C.pcap_dump_open(p.cptr,C.CString(filename))
+    return
+}
+
+func (pd *PcapDumper) Dump(pkt *Packet){
+    var pkthdr C.struct_pcap_pkthdr
+    pkthdr.ts.tv_sec = (C.__time_t)(pkt.Time.Sec)
+    pkthdr.ts.tv_usec = (C.__suseconds_t)(pkt.Time.Usec)
+    pkthdr.caplen = (C.bpf_u_int32)(pkt.Caplen)
+    pkthdr.len = (C.bpf_u_int32)(pkt.Len)
+    
+    buf := (*C.char)(C.malloc((C.size_t)(len(pkt.Data))))
+
+    for i:=0 ; i < len(pkt.Data) ; i++ {
+        *(*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(buf)) + uintptr(i))) = pkt.Data[i]
+    }
+    
+    C.pcap_dump((*C.u_char)(unsafe.Pointer(pd.cptr)),&pkthdr,(*C.u_char)(unsafe.Pointer(buf)))
+}
